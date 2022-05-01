@@ -5,6 +5,7 @@ import BooksDB
 import TokensDB
 import UsersDB
 import com.google.inject.Inject
+import java.time.LocalDateTime
 
 /**
  * This is the main class implementing SifriTaub, the new book borrowing system.
@@ -19,6 +20,9 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory) {
     private val booksDB = BooksDB()
     private val tokensDB = TokensDB()
     private val authDB = AuthDB()
+
+    // TODO: think how to change it so SifriTaub will have single responsibility
+    private val ids : MutableSet<String> = mutableSetOf()
 
     private fun isValidToken(token: String): Boolean {
         var isValid = false
@@ -112,11 +116,16 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory) {
      * @throws IllegalArgumentException If a book with the same [id] already exists.
      */
     fun addBookToCatalog(token: String, id: String, description: String, copiesAmount: Int): Unit {
-        // call isValidToken with token and throw exception if false
-        // open books DB
-        // check if id already exists - throw exception if so
-        // create value for current time - timeAdded
-        // create Book object for book data with timeAdded and add to Books DB
+        if (!isValidToken(token)) {
+            throw PermissionException()
+        }
+        val book: ByteArray? = booksDB.read(id.toByteArray())
+        if (book != null) {
+            throw IllegalArgumentException("Book already exists")
+        }
+        ids.add(id)
+        // TODO: deal with description larger than 100Bytes
+        booksDB.write(id.toByteArray(), Book(id, description, copiesAmount, LocalDateTime.now()).toByteArray())
     }
 
 
@@ -132,11 +141,11 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory) {
      * @return A description string of the book with [id]
      */
     fun getBookDescription(token: String, id: String): String {
-        // call isValidToken with token and throw exception if false
-        // open Books DB
-        // read the description of book id - throw exception if not exists
-        // return the description
-        return ""
+        if (!isValidToken(token)) {
+            throw PermissionException()
+        }
+        val book = booksDB.read(id.toByteArray()) ?: throw IllegalArgumentException("No such book")
+        return Book.fromJSON(book.toString()).description
     }
 
     /**
@@ -151,9 +160,13 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory) {
      * If there are less than [n] ids of books, this method returns a list of all book ids (sorted as defined above).
      */
     fun listBookIds(token: String, n: Int = 10): List<String> {
-        // call isValidToken with token and throw exception if false
-        // open Books DB
-        // map books to [id, timeAdded], sort by timeAdded and return first n id's
-        return listOf("")
+        if (!isValidToken(token)) {
+            throw PermissionException()
+        }
+        return ids.asSequence().map { Pair(it , Book.fromJSON(booksDB.read(it.toByteArray()).toString()).timeAdded) }
+            .sortedBy { it.second }
+            .take( n )
+            .map { it.first }
+            .toList()
     }
 }
