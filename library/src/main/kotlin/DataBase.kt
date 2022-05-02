@@ -1,3 +1,5 @@
+import com.google.inject.Provider
+import il.ac.technion.cs.softwaredesign.storage.SecureStorage
 import il.ac.technion.cs.softwaredesign.storage.SecureStorageFactory
 
 

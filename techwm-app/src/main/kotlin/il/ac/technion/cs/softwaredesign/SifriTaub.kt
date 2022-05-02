@@ -1,11 +1,11 @@
 package il.ac.technion.cs.softwaredesign
 
-import AuthDB
-import BooksDB
-import TokensDB
-import UsersDB
+import DataBase
 import com.google.inject.Inject
+import com.google.inject.Provider
+import il.ac.technion.cs.softwaredesign.storage.SecureStorageFactory
 import java.time.LocalDateTime
+
 
 /**
  * This is the main class implementing SifriTaub, the new book borrowing system.
@@ -14,12 +14,13 @@ import java.time.LocalDateTime
  * + Managing users
  * + Managing Books
  */
-class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory) {
+class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, private val dataBaseProvider: Provider<SecureStorageFactory>) {
 
-    private val usersDB = UsersDB()
-    private val booksDB = BooksDB()
-    private val tokensDB = TokensDB()
-    private val authDB = AuthDB()
+    private val dbFactory = dataBaseProvider.get()
+    private val usersDB = DataBase(dbFactory, "users".toByteArray())
+    private val booksDB = DataBase(dbFactory, "books".toByteArray())
+    private val tokensDB = DataBase(dbFactory, "tokens".toByteArray())
+    private val authDB = DataBase(dbFactory, "auth".toByteArray())
 
     // TODO: think how to change it so SifriTaub will have single responsibility
     private val ids : MutableSet<String> = mutableSetOf()
