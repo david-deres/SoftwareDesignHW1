@@ -1,6 +1,7 @@
 package il.ac.technion.cs.softwaredesign
 
 import DataBase
+import IDsDataBase
 import com.google.inject.Inject
 import com.google.inject.Provider
 import il.ac.technion.cs.softwaredesign.storage.SecureStorageFactory
@@ -21,17 +22,18 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, pri
     private val booksDB = DataBase(dbFactory, "books".toByteArray())
     private val tokensDB = DataBase(dbFactory, "tokens".toByteArray())
     private val authDB = DataBase(dbFactory, "auth".toByteArray())
+    private val idsDB = IDsDataBase(dbFactory)
 
-    // TODO: think how to change it so SifriTaub will have single responsibility
-    private val ids : MutableSet<String> = mutableSetOf()
 
     private fun isValidToken(token: String): Boolean {
         var isValid = false
-        if (tokensDB.read(token.toByteArray()) != null){
+        if (tokensDB.read(token) != null){
             isValid = true
         }
         return isValid
     }
+
+
     /**
      * Authenticate a user identified by [username] and [password].
      *
@@ -47,13 +49,13 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, pri
      */
 
     fun authenticate(username: String, password: String): String {
-        val pass = authDB.read(username.toByteArray()) ?: throw IllegalArgumentException("No such user exists")
+        val pass = authDB.read(username) ?: throw IllegalArgumentException("No such user exists")
         if (password != pass.toString()) {
             throw IllegalArgumentException("Wrong Password!")
         }
         val token = tokenFactory.createToken()
         // write invalidates previous token by overwriting it
-        tokensDB.write(username.toByteArray(), token.toByteArray())
+        tokensDB.write(username, token.toByteArray())
         return token
     }
 
@@ -74,12 +76,12 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, pri
         if (age < 0) {
             throw IllegalArgumentException("Negative age is illegal")
         }
-        val user = usersDB.read(username.toByteArray())
+        val user = usersDB.read(username)
         if (user != null) {
             throw IllegalArgumentException("User already exists")
         }
-        usersDB.write(username.toByteArray(), User(username, isFromCS, age).toByteArray())
-        authDB.write(username.toByteArray(), password.toByteArray())
+        usersDB.write(username, User(username, isFromCS, age).toByteArray())
+        authDB.write(username, password.toByteArray())
     }
 
     /**
@@ -99,7 +101,7 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, pri
         if (!isValidToken(token)) {
             throw PermissionException()
         }
-        val userInfo = usersDB.read(username.toByteArray()) ?: return null
+        val userInfo = usersDB.read(username) ?: return null
         return User.fromJSON(userInfo.toString())
     }
 
@@ -120,13 +122,12 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, pri
         if (!isValidToken(token)) {
             throw PermissionException()
         }
-        val book: ByteArray? = booksDB.read(id.toByteArray())
+        val book: ByteArray? = booksDB.read(id)
         if (book != null) {
             throw IllegalArgumentException("Book already exists")
         }
-        ids.add(id)
-        // TODO: deal with description larger than 100Bytes
-        booksDB.write(id.toByteArray(), Book(id, description, copiesAmount, LocalDateTime.now()).toByteArray())
+        idsDB.addId(id)
+        booksDB.write(id, Book(id, description, copiesAmount, LocalDateTime.now()).toByteArray())
     }
 
 
@@ -145,7 +146,7 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, pri
         if (!isValidToken(token)) {
             throw PermissionException()
         }
-        val book = booksDB.read(id.toByteArray()) ?: throw IllegalArgumentException("No such book")
+        val book = booksDB.read(id) ?: throw IllegalArgumentException("No such book")
         return Book.fromJSON(book.toString()).description
     }
 
@@ -164,7 +165,8 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, pri
         if (!isValidToken(token)) {
             throw PermissionException()
         }
-        return ids.asSequence().map { Pair(it , Book.fromJSON(booksDB.read(it.toByteArray()).toString()).timeAdded) }
+        val ids = idsDB.getIds()
+        return ids.asSequence().map { Pair(it , Book.fromJSON(booksDB.read(it).toString()).timeAdded) }
             .sortedBy { it.second }
             .take( n )
             .map { it.first }
