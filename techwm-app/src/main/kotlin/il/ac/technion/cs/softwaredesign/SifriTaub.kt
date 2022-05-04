@@ -15,13 +15,13 @@ import java.time.LocalDateTime
  * + Managing users
  * + Managing Books
  */
-class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, private val dataBaseProvider: Provider<SecureStorageFactory>) {
+class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dataBaseProvider: Provider<SecureStorageFactory>) {
 
     private val dbFactory = dataBaseProvider.get()
-    private val usersDB = DataBase(dbFactory, "users".toByteArray())
-    private val booksDB = DataBase(dbFactory, "books".toByteArray())
-    private val tokensDB = DataBase(dbFactory, "tokens".toByteArray())
-    private val authDB = DataBase(dbFactory, "auth".toByteArray())
+    private val usersDB = DataBase(dbFactory, "users")
+    private val booksDB = DataBase(dbFactory, "books")
+    private val tokensDB = DataBase(dbFactory, "tokens")
+    private val authDB = DataBase(dbFactory, "auth")
     private val idsDB = IDsDataBase(dbFactory)
 
 

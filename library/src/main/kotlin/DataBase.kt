@@ -1,16 +1,17 @@
 import il.ac.technion.cs.softwaredesign.storage.SecureStorageFactory
 
 
-open class DataBase (dbFactory: SecureStorageFactory, name:ByteArray) {
-    private val db = dbFactory.open(name)
+open class DataBase (dbFactory: SecureStorageFactory, name:String) {
+    private val db = dbFactory.open(name.toByteArray())
 
+    // Size in Bytes
     private val maxDBEntrySize = 100
 
     fun read (key: String): ByteArray?{
         var returnedValue = byteArrayOf()
-        var counter : Int = 1
-        var currentKey : ByteArray
-        var currentValue = db.read("${key}_0".toByteArray())
+        var counter = 1
+        var currentKey = "${key}_0".toByteArray()
+        var currentValue = db.read(currentKey)
         while (currentValue != null) {
             returnedValue += currentValue
             currentKey = key.plus("_${counter}").toByteArray()
