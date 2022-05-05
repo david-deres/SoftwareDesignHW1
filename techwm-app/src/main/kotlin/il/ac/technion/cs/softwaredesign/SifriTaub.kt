@@ -2,6 +2,7 @@ package il.ac.technion.cs.softwaredesign
 
 import DataBase
 import IDsDataBase
+import TokensDataBase
 import com.google.inject.Inject
 import com.google.inject.Provider
 import il.ac.technion.cs.softwaredesign.storage.SecureStorageFactory
@@ -20,18 +21,10 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
     private val dbFactory = dataBaseProvider.get()
     private val usersDB = DataBase(dbFactory, "users")
     private val booksDB = DataBase(dbFactory, "books")
-    private val tokensDB = DataBase(dbFactory, "tokens")
     private val authDB = DataBase(dbFactory, "auth")
+    private val tokensDB = TokensDataBase(dbFactory)
     private val idsDB = IDsDataBase(dbFactory)
 
-
-    private fun isValidToken(token: String): Boolean {
-        var isValid = false
-        if (tokensDB.read(token) != null){
-            isValid = true
-        }
-        return isValid
-    }
 
 
     /**
@@ -50,12 +43,12 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
 
     fun authenticate(username: String, password: String): String {
         val pass = authDB.read(username) ?: throw IllegalArgumentException("No such user exists")
-        if (password != pass.toString()) {
+        if (password != String(pass)) {
             throw IllegalArgumentException("Wrong Password!")
         }
         val token = tokenFactory.createToken()
         // write invalidates previous token by overwriting it
-        tokensDB.write(username, token.toByteArray())
+        tokensDB.addToken(username, token)
         return token
     }
 
@@ -98,11 +91,11 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
      * return `null`, indicating that there is no such user
      */
     fun userInformation(token: String, username: String): User? {
-        if (!isValidToken(token)) {
+        if (!tokensDB.isValidToken(token)) {
             throw PermissionException()
         }
         val userInfo = usersDB.read(username) ?: return null
-        return User.fromJSON(userInfo.toString())
+        return User.fromJSON(String(userInfo))
     }
 
     /**
@@ -119,7 +112,7 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
      * @throws IllegalArgumentException If a book with the same [id] already exists.
      */
     fun addBookToCatalog(token: String, id: String, description: String, copiesAmount: Int): Unit {
-        if (!isValidToken(token)) {
+        if (!tokensDB.isValidToken(token)) {
             throw PermissionException()
         }
         val book: ByteArray? = booksDB.read(id)
@@ -143,11 +136,11 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
      * @return A description string of the book with [id]
      */
     fun getBookDescription(token: String, id: String): String {
-        if (!isValidToken(token)) {
+        if (!tokensDB.isValidToken(token)) {
             throw PermissionException()
         }
         val book = booksDB.read(id) ?: throw IllegalArgumentException("No such book")
-        return Book.fromJSON(book.toString()).description
+        return Book.fromJSON(String(book)).description
     }
 
     /**
@@ -162,11 +155,12 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
      * If there are less than [n] ids of books, this method returns a list of all book ids (sorted as defined above).
      */
     fun listBookIds(token: String, n: Int = 10): List<String> {
-        if (!isValidToken(token)) {
+        if (!tokensDB.isValidToken(token)) {
             throw PermissionException()
         }
-        val ids = idsDB.getIds()
-        return ids.asSequence().map { Pair(it , Book.fromJSON(booksDB.read(it).toString()).timeAdded) }
+        val ids = idsDB.getIds() ?: return listOf()
+        return ids.asSequence().map { Pair(it ,
+            booksDB.read(it)?.let { it1 -> String(it1) }?.let { it2 -> Book.fromJSON(it2).timeAdded }) }
             .sortedBy { it.second }
             .take( n )
             .map { it.first }

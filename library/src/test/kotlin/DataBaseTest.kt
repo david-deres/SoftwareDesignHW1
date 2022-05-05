@@ -9,7 +9,7 @@ import org.junit.jupiter.api.*
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class DataBaseTest {
-    private val injector = Guice.createInjector(SecureStorageModule())
+    private val injector = Guice.createInjector(TestSecureStorageModule())
     private val manager = injector.getInstance<SecureStorageFactory>()
 
     private lateinit var db: DataBase

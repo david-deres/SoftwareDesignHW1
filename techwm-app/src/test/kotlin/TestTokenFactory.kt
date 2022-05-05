@@ -1,4 +1,4 @@
-package il.ac.technion.cs.softwaredesign
+import il.ac.technion.cs.softwaredesign.TokenFactory
 
 class TestTokenFactory: TokenFactory {
     private var number = 0

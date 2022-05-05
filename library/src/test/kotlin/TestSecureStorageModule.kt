@@ -5,7 +5,7 @@ import il.ac.technion.cs.softwaredesign.storage.SecureStorageFactory
 
 
 
-class SecureStorageModule : KotlinModule() {
+class TestSecureStorageModule : KotlinModule() {
 
     override fun configure() {
         bind<SecureStorageFactory>().to<TestSecureStorageFactory>()
