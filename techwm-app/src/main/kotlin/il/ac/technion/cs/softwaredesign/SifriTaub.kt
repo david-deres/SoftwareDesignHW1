@@ -158,7 +158,7 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
         if (!tokensDB.isValidToken(token)) {
             throw PermissionException()
         }
-        val ids = idsDB.getIds() ?: return listOf()
+        val ids = idsDB.getIds()
         return ids.asSequence().map { Pair(it ,
             booksDB.read(it)?.let { it1 -> String(it1) }?.let { it2 -> Book.fromJSON(it2).timeAdded }) }
             .sortedBy { it.second }
