@@ -47,7 +47,7 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
             throw IllegalArgumentException("Wrong Password!")
         }
         val token = tokenFactory.createToken()
-        // write invalidates previous token by overwriting it
+        tokensDB.invalidateToken(username)
         tokensDB.addToken(username, token)
         return token
     }
@@ -74,7 +74,7 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
             throw IllegalArgumentException("User already exists")
         }
         usersDB.write(username, User(username, isFromCS, age).toByteArray())
-        authDB.write(username, password.toByteArray())
+        authDB.write(username, password.encodeToByteArray())
     }
 
     /**
@@ -159,8 +159,8 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
             throw PermissionException()
         }
         val ids = idsDB.getIds()
-        return ids.asSequence().map { Pair(it ,
-            booksDB.read(it)?.let { it1 -> String(it1) }?.let { it2 -> Book.fromJSON(it2).timeAdded }) }
+        return ids.asSequence()
+            .map { Pair(it , Book.fromJSON(String(booksDB.read(it)!!)).timeAdded)}
             .sortedBy { it.second }
             .take( n )
             .map { it.first }

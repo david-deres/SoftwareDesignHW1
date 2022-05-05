@@ -7,11 +7,14 @@ class TokensDataBase(dbFactory: SecureStorageFactory) : DataBase(dbFactory, "tok
     private val validTokenValue = "VALID".encodeToByteArray()
     private val invalidTokenValue = "INVALID".encodeToByteArray()
 
-    fun addToken(username: String, token: String){
+    fun invalidateToken(username: String){
         val prevToken = this.read(username)
         if (prevToken != null) {
             tokens.write(String(prevToken), invalidTokenValue)
         }
+    }
+
+    fun addToken(username: String, token: String){
         this.write(username, token.encodeToByteArray())
         tokens.write(token, validTokenValue)
     }
