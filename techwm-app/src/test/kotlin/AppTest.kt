@@ -1,6 +1,7 @@
 import com.google.inject.Guice
 import dev.misfitlabs.kotlinguice4.getInstance
 import il.ac.technion.cs.softwaredesign.*
+import io.mockk.mockk
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertDoesNotThrow
@@ -17,6 +18,15 @@ class AppTest {
 
         assertThrows<IllegalArgumentException> {
             manager.authenticate(username, password)
+        }
+    }
+
+    @Test
+    fun `a non-existing token throws exception on requests`() {
+        val token = "HELLO_WORLD"
+
+        assertThrows<PermissionException> {
+            manager.listBookIds(token)
         }
     }
 
@@ -98,7 +108,7 @@ class AppTest {
     }
 
     @Test
-    fun `listBookIds works properly`() {
+    fun `listBookIds works properly with default n`() {
         val username = "a"
         val password = "b"
         val description = "A wonderful book about cats and their owners"
@@ -110,6 +120,48 @@ class AppTest {
             manager.addBookToCatalog(token, id.toString(), description , 5)
         }
         Assertions.assertEquals((1..10).toList().map{it.toString()}, manager.listBookIds(token))
+    }
+
+    @Test
+    fun `listBookIds returns the newest 3 book id's properly`() {
+        val username = "a"
+        val password = "b"
+        val description = "A wonderful book about cats and their owners"
+
+
+        manager.register(username, password, true, 31)
+        val token =  manager.authenticate(username, password)
+        val ids = (1..10).shuffled()
+        for (id in ids) {
+            manager.addBookToCatalog(token, id.toString(), description , 5)
+        }
+        Assertions.assertEquals(ids.take(3).map{it.toString()}, manager.listBookIds(token, 3))
+    }
+
+    @Test
+    fun `users are persistant after reboot`() {
+        val username = "user-a"
+        val password = "123456"
+
+        manager.register(username, password, true, 25)
+        val newInstance = injector.getInstance<SifriTaub>()
+
+        assertDoesNotThrow {
+            newInstance.authenticate(username, password)
+        }
+    }
+
+    @Test
+    fun `tokens are persistant after reboot`() {
+        val username = "user-a"
+        val password = "123456"
+
+        manager.register(username, password, true, 25)
+        val newInstance = injector.getInstance<SifriTaub>()
+        val token = newInstance.authenticate(username, password)
+        assertDoesNotThrow {
+            newInstance.listBookIds(token)
+        }
     }
 }
 

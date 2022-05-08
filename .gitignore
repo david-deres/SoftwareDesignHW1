@@ -228,3 +228,8 @@
 /library/build/classes/kotlin/test/il/ac/technion/cs/softwaredesign/TestSecureStorageModule$configure$$inlined$to$1.class
 /library/build/classes/kotlin/test/il/ac/technion/cs/softwaredesign/TestSecureStorageModule.class
 /techwm-app/build/classes/kotlin/main/il/ac/technion/cs/softwaredesign/TokensManager.class
+/techwm-app/build/classes/kotlin/test/AppTest$a non-existing token throws exception on requests$1.class
+/techwm-app/build/classes/kotlin/test/AppTest$tokens are persistant after reboot$$inlined$getInstance$1.class
+/techwm-app/build/classes/kotlin/test/AppTest$tokens are persistant after reboot$1.class
+/techwm-app/build/classes/kotlin/test/AppTest$users are persistant after reboot$$inlined$getInstance$1.class
+/techwm-app/build/classes/kotlin/test/AppTest$users are persistant after reboot$1.class
