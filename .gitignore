@@ -5,7 +5,6 @@
 /techwm-app/build/classes/kotlin/main/il/ac/technion/cs/softwaredesign/SifriTaub$listBookIds$3.class
 /techwm-app/build/classes/kotlin/main/il/ac/technion/cs/softwaredesign/SifriTaubModule$configure$$inlined$bind$2.class
 /techwm-app/build/classes/kotlin/main/il/ac/technion/cs/softwaredesign/SifriTaubModule$configure$$inlined$getInstance$1.class
-/library/build/classes/kotlin/main/IDsDataBase.class
 /techwm-app/build/classes/kotlin/main/il/ac/technion/cs/softwaredesign/ProductionTokenFactory.class
 /library/build/reports/tests/test/css/base-style.css
 /library/build/kotlin/compileTestKotlin/build-history.bin
@@ -224,4 +223,8 @@
 /techwm-app/build/kotlin/compileTestKotlin/caches-jvm/lookups/lookups.tab.values
 /techwm-app/build/kotlin/compileTestKotlin/caches-jvm/lookups/lookups.tab.values.s
 /techwm-app/build/test-results/test/binary/results.bin
-/library/build/classes/kotlin/main/TokensDataBase.class
+/techwm-app/build/classes/kotlin/main/il/ac/technion/cs/softwaredesign/IDsManager.class
+/library/build/classes/kotlin/test/il/ac/technion/cs/softwaredesign/TestSecureStorageModule$configure$$inlined$bind$1.class
+/library/build/classes/kotlin/test/il/ac/technion/cs/softwaredesign/TestSecureStorageModule$configure$$inlined$to$1.class
+/library/build/classes/kotlin/test/il/ac/technion/cs/softwaredesign/TestSecureStorageModule.class
+/techwm-app/build/classes/kotlin/main/il/ac/technion/cs/softwaredesign/TokensManager.class

@@ -1,8 +1,6 @@
 package il.ac.technion.cs.softwaredesign
 
 import DataBase
-import IDsDataBase
-import TokensDataBase
 import com.google.inject.Inject
 import com.google.inject.Provider
 import il.ac.technion.cs.softwaredesign.storage.SecureStorageFactory
@@ -22,8 +20,8 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
     private val usersDB = DataBase(dbFactory, "users")
     private val booksDB = DataBase(dbFactory, "books")
     private val authDB = DataBase(dbFactory, "auth")
-    private val tokensDB = TokensDataBase(dbFactory)
-    private val idsDB = IDsDataBase(dbFactory)
+    private val tokensManager = TokensManager(dbFactory, "tokens")
+    private val idsManager = IDsManager(DataBase(dbFactory, "ids"))
 
 
 
@@ -47,8 +45,8 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
             throw IllegalArgumentException("Wrong Password!")
         }
         val token = tokenFactory.createToken()
-        tokensDB.invalidateToken(username)
-        tokensDB.addToken(username, token)
+        tokensManager.invalidateToken(username)
+        tokensManager.addToken(username, token)
         return token
     }
 
@@ -91,7 +89,7 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
      * return `null`, indicating that there is no such user
      */
     fun userInformation(token: String, username: String): User? {
-        if (!tokensDB.isValidToken(token)) {
+        if (!tokensManager.isValidToken(token)) {
             throw PermissionException()
         }
         val userInfo = usersDB.read(username) ?: return null
@@ -112,14 +110,14 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
      * @throws IllegalArgumentException If a book with the same [id] already exists.
      */
     fun addBookToCatalog(token: String, id: String, description: String, copiesAmount: Int): Unit {
-        if (!tokensDB.isValidToken(token)) {
+        if (!tokensManager.isValidToken(token)) {
             throw PermissionException()
         }
         val book: ByteArray? = booksDB.read(id)
         if (book != null) {
             throw IllegalArgumentException("Book already exists")
         }
-        idsDB.addId(id)
+        idsManager.addId(id)
         booksDB.write(id, Book(id, description, copiesAmount, LocalDateTime.now()).toByteArray())
     }
 
@@ -136,7 +134,7 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
      * @return A description string of the book with [id]
      */
     fun getBookDescription(token: String, id: String): String {
-        if (!tokensDB.isValidToken(token)) {
+        if (!tokensManager.isValidToken(token)) {
             throw PermissionException()
         }
         val book = booksDB.read(id) ?: throw IllegalArgumentException("No such book")
@@ -155,10 +153,10 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
      * If there are less than [n] ids of books, this method returns a list of all book ids (sorted as defined above).
      */
     fun listBookIds(token: String, n: Int = 10): List<String> {
-        if (!tokensDB.isValidToken(token)) {
+        if (!tokensManager.isValidToken(token)) {
             throw PermissionException()
         }
-        val ids = idsDB.getIds()
+        val ids = idsManager.getIds()
         return ids.asSequence()
             .map { Pair(it , Book.fromJSON(String(booksDB.read(it)!!)).timeAdded)}
             .sortedBy { it.second }

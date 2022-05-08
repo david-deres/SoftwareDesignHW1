@@ -1,21 +1,25 @@
+package il.ac.technion.cs.softwaredesign
+
+import DataBase
 import il.ac.technion.cs.softwaredesign.storage.SecureStorageFactory
 
-class TokensDataBase(dbFactory: SecureStorageFactory) : DataBase(dbFactory, "tokens") {
+class TokensManager (dbFactory: SecureStorageFactory, name: String) {
 
+    private val userTokenDB = DataBase(dbFactory, name)
     private val dbName = this.hashCode().toString()
     private val tokens = DataBase(dbFactory, dbName)
     private val validTokenValue = "VALID".encodeToByteArray()
     private val invalidTokenValue = "INVALID".encodeToByteArray()
 
     fun invalidateToken(username: String){
-        val prevToken = this.read(username)
+        val prevToken = userTokenDB.read(username)
         if (prevToken != null) {
             tokens.write(String(prevToken), invalidTokenValue)
         }
     }
 
     fun addToken(username: String, token: String){
-        this.write(username, token.encodeToByteArray())
+        userTokenDB.write(username, token.encodeToByteArray())
         tokens.write(token, validTokenValue)
     }
 
@@ -23,5 +27,4 @@ class TokensDataBase(dbFactory: SecureStorageFactory) : DataBase(dbFactory, "tok
         val value = tokens.read(token) ?: return false
         return (String(value) == String(validTokenValue))
     }
-
 }
