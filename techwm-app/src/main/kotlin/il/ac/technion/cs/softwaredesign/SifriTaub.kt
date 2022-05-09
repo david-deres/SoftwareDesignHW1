@@ -14,15 +14,14 @@ import java.time.LocalDateTime
  * + Managing users
  * + Managing Books
  */
-class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dataBaseProvider: Provider<SecureStorageFactory>) {
+class SifriTaub @Inject constructor (tokenFactory: TokenFactory, dataBaseProvider: Provider<SecureStorageFactory>) {
 
     private val dbFactory = dataBaseProvider.get()
     private val usersDB = DataBase(dbFactory, "users")
     private val booksDB = DataBase(dbFactory, "books")
     private val authDB = DataBase(dbFactory, "auth")
-    private val tokensManager = TokensManager(dbFactory, "tokens")
+    private val tokensManager = TokensManager(tokenFactory, dbFactory, "tokens")
     private val idsManager = IDsManager(DataBase(dbFactory, "ids"))
-
 
 
     /**
@@ -44,10 +43,8 @@ class SifriTaub @Inject constructor (private val tokenFactory: TokenFactory, dat
         if (password != String(pass)) {
             throw IllegalArgumentException("Wrong Password!")
         }
-        val token = tokenFactory.createToken()
         tokensManager.invalidateToken(username)
-        tokensManager.addToken(username, token)
-        return token
+        return tokensManager.createToken(username)
     }
 
     /**
